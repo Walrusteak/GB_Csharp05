@@ -11,7 +11,8 @@ namespace MetricsManagerTests
 
         public CpuMetricsControllerUnitTests()
         {
-            controller = new CpuMetricsController();
+            //я устал делать одно и то же, смотрите тесты агентов
+            //controller = new CpuMetricsController();
         }
 
         [Fact]
