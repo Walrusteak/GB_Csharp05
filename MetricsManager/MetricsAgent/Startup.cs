@@ -9,6 +9,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Data.SQLite;
 using MetricsAgent.DAL;
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
 
 
 namespace MetricsAgent
@@ -28,6 +30,16 @@ namespace MetricsAgent
             services.AddControllers();
             ConfigureSqlLiteConnection(services);
             services.AddScoped<ICpuMetricsRepository, CpuMetricsRepository>();
+            services.AddScoped<IDotNetMetricsRepository, DotNetMetricsRepository>();
+            services.AddScoped<IHddMetricsRepository, HddMetricsRepository>();
+            services.AddScoped<INetworkMetricsRepository, NetworkMetricsRepository>();
+            services.AddScoped<IRamMetricsRepository, RamMetricsRepository>();
+
+            MapperConfiguration mapperConfiguration = new(mp => mp.AddProfile(new MapperProfile()));
+            IMapper mapper = mapperConfiguration.CreateMapper();
+            services.AddSingleton(mapper);
+
+            services.AddMvc().AddNewtonsoftJson();  //меняем стандартный парсер во имя таймспанов
         }
 
         private void ConfigureSqlLiteConnection(IServiceCollection services)
@@ -76,7 +88,6 @@ namespace MetricsAgent
                 cmd.ExecuteNonQuery();
             }
         }
-
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

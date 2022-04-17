@@ -1,7 +1,9 @@
 ﻿using MetricsAgent.Models;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using Dapper;
 
 namespace MetricsAgent.DAL
 {
@@ -13,107 +15,61 @@ namespace MetricsAgent.DAL
     {
         private const string ConnectionString = "DataSource=metrics.db;Version=3;Pooling=true;Max Pool Size=100;";
 
+        public RamMetricsRepository()
+        {
+            SqlMapper.AddTypeHandler(new TimeSpanHandler());
+        }
+
         public void Create(RamMetric item)
         {
             using SQLiteConnection connection = new(ConnectionString);
-            connection.Open();
-            using SQLiteCommand cmd = new(connection);
-            cmd.CommandText = "INSERT INTO rammetrics(value, time) VALUES(@value, @time)";
-            cmd.Parameters.AddWithValue("@value", item.Value);
-            cmd.Parameters.AddWithValue("@time", item.Time.TotalSeconds);
-            cmd.Prepare();
-            cmd.ExecuteNonQuery();
+            connection.Execute("INSERT INTO rammetrics(value, time) VALUES(@value, @time)",
+                new
+                {
+                    value = item.Value,
+                    time = item.Time.TotalSeconds
+                });
         }
 
         public void Delete(int id)
         {
             using SQLiteConnection connection = new(ConnectionString);
-            connection.Open();
-            using SQLiteCommand cmd = new(connection);
-            cmd.CommandText = "DELETE FROM rammetrics WHERE id=@id";
-            cmd.Parameters.AddWithValue("@id", id);
-            cmd.Prepare();
-            cmd.ExecuteNonQuery();
+            connection.Execute("DELETE FROM rammetrics WHERE id=@id", new { id });
         }
 
         public void Update(RamMetric item)
         {
             using SQLiteConnection connection = new(ConnectionString);
-            using SQLiteCommand cmd = new(connection);
-            cmd.CommandText = "UPDATE rammetrics SET value = @value, time = @time WHERE id = @id; ";
-            cmd.Parameters.AddWithValue("@id", item.Id);
-            cmd.Parameters.AddWithValue("@value", item.Value);
-            cmd.Parameters.AddWithValue("@time", item.Time.TotalSeconds);
-            cmd.Prepare();
-            cmd.ExecuteNonQuery();
+            connection.Execute("UPDATE rammetrics SET value = @value, time = @time WHERE id = @id",
+                new
+                {
+                    value = item.Value,
+                    time = item.Time.TotalSeconds,
+                    id = item.Id
+                });
         }
 
         public IList<RamMetric> GetAll()
         {
             using SQLiteConnection connection = new(ConnectionString);
-            connection.Open();
-            using SQLiteCommand cmd = new(connection);
-            cmd.CommandText = "SELECT * FROM rammetrics";
-            List<RamMetric> returnList = new();
-            using (SQLiteDataReader reader = cmd.ExecuteReader())
-            {
-                while (reader.Read())
-                {
-                    returnList.Add(new RamMetric
-                    {
-                        Id = reader.GetInt32(0),
-                        Value = reader.GetInt32(1),
-                        Time = TimeSpan.FromSeconds(reader.GetInt32(2))
-                    });
-                }
-            }
-            return returnList;
+            return connection.Query<RamMetric>("SELECT Id, Time, Value FROM rammetrics").ToList();
         }
 
         public RamMetric GetById(int id)
         {
             using SQLiteConnection connection = new(ConnectionString);
-            connection.Open();
-            using SQLiteCommand cmd = new(connection);
-            cmd.CommandText = "SELECT * FROM rammetrics WHERE id=@id";
-            using (SQLiteDataReader reader = cmd.ExecuteReader())
-            {
-                if (reader.Read())
-                {
-                    return new RamMetric
-                    {
-                        Id = reader.GetInt32(0),
-                        Value = reader.GetInt32(1),
-                        Time = TimeSpan.FromSeconds(reader.GetInt32(1))
-                    };
-                }
-                else
-                {
-                    return null;
-                }
-            }
+            return connection.QuerySingle<RamMetric>("SELECT Id, Time, Value FROM rammetrics WHERE id = @id", new { id });
         }
 
         public IList<RamMetric> GetByTimePeriod(TimeSpan from, TimeSpan to)
         {
             using SQLiteConnection connection = new(ConnectionString);
-            connection.Open();
-            using SQLiteCommand cmd = new(connection);
-            cmd.CommandText = "SELECT * FROM rammetrics where time between @from and @to";
-            List<RamMetric> returnList = new();
-            using (SQLiteDataReader reader = cmd.ExecuteReader())
-            {
-                while (reader.Read())
+            return connection.Query<RamMetric>("SELECT Id, Time, Value FROM rammetrics where time between @from and @to",
+                new
                 {
-                    returnList.Add(new RamMetric
-                    {
-                        Id = reader.GetInt32(0),
-                        Value = reader.GetInt32(1),
-                        Time = TimeSpan.FromSeconds(reader.GetInt32(2))
-                    });
-                }
-            }
-            return returnList;
+                    from = from.TotalSeconds,
+                    to = to.TotalSeconds
+                }).ToList();
         }
     }
 }

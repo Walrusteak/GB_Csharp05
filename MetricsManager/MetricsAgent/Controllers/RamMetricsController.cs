@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using AutoMapper;
 
 namespace MetricsAgent.Controllers
 {
@@ -15,12 +16,14 @@ namespace MetricsAgent.Controllers
     {
         private readonly ILogger<RamMetricsController> _logger;
         private readonly IRamMetricsRepository _repository;
+        private readonly IMapper _mapper;
 
-        public RamMetricsController(IRamMetricsRepository repository, ILogger<RamMetricsController> logger)
+        public RamMetricsController(IRamMetricsRepository repository, ILogger<RamMetricsController> logger, IMapper mapper)
         {
             _repository = repository;
             _logger = logger;
             _logger.LogDebug(1, $"NLog встроен в {GetType().Name}");
+            _mapper = mapper;
         }
 
         [HttpGet("available/from/{fromTime}/to/{toTime}")]
@@ -32,14 +35,9 @@ namespace MetricsAgent.Controllers
             {
                 Metrics = new List<RamMetricDto>()
             };
-            foreach (var metric in metrics)
+            foreach (RamMetric metric in metrics)
             {
-                response.Metrics.Add(new RamMetricDto
-                {
-                    Time = metric.Time,
-                    Value = metric.Value,
-                    Id = metric.Id
-                });
+                response.Metrics.Add(_mapper.Map<RamMetricDto>(metric));
             }
             return Ok(response);
         }
@@ -65,14 +63,9 @@ namespace MetricsAgent.Controllers
             {
                 Metrics = new List<RamMetricDto>()
             };
-            foreach (var metric in metrics)
+            foreach (RamMetric metric in metrics)
             {
-                response.Metrics.Add(new RamMetricDto
-                {
-                    Time = metric.Time,
-                    Value = metric.Value,
-                    Id = metric.Id
-                });
+                response.Metrics.Add(_mapper.Map<RamMetricDto>(metric));
             }
             return Ok(response);
         }
@@ -84,14 +77,9 @@ namespace MetricsAgent.Controllers
             RamMetric metric = _repository.GetById(id);
             AllRamMetricsResponse response = new()
             {
-                Metrics = new List<RamMetricDto>(id)
+                Metrics = new List<RamMetricDto>(1)
                 {
-                    new RamMetricDto
-                    {
-                        Time = metric.Time,
-                        Value = metric.Value,
-                        Id = metric.Id
-                    }
+                    _mapper.Map<RamMetricDto>(metric)
                 }
             };
             return Ok(response);

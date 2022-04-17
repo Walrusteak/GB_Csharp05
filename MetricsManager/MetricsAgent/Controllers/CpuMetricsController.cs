@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using AutoMapper;
 
 namespace MetricsAgent.Controllers
 {
@@ -15,12 +16,14 @@ namespace MetricsAgent.Controllers
     {
         private readonly ILogger<CpuMetricsController> _logger;
         private readonly ICpuMetricsRepository _repository;
+        private readonly IMapper _mapper;
 
-        public CpuMetricsController(ICpuMetricsRepository repository, ILogger<CpuMetricsController> logger)
+        public CpuMetricsController(ICpuMetricsRepository repository, ILogger<CpuMetricsController> logger, IMapper mapper)
         {
             _repository = repository;
             _logger = logger;
             _logger.LogDebug(1, $"NLog встроен в {GetType().Name}");
+            _mapper = mapper;
         }
 
         [HttpGet("from/{fromTime}/to/{toTime}")]
@@ -32,14 +35,9 @@ namespace MetricsAgent.Controllers
             {
                 Metrics = new List<CpuMetricDto>()
             };
-            foreach (var metric in metrics)
+            foreach (CpuMetric metric in metrics)
             {
-                response.Metrics.Add(new CpuMetricDto
-                {
-                    Time = metric.Time,
-                    Value = metric.Value,
-                    Id = metric.Id
-                });
+                response.Metrics.Add(_mapper.Map<CpuMetricDto>(metric));
             }
             return Ok(response);
         }
@@ -65,14 +63,9 @@ namespace MetricsAgent.Controllers
             {
                 Metrics = new List<CpuMetricDto>()
             };
-            foreach (var metric in metrics)
+            foreach (CpuMetric metric in metrics)
             {
-                response.Metrics.Add(new CpuMetricDto
-                {
-                    Time = metric.Time,
-                    Value = metric.Value,
-                    Id = metric.Id
-                });
+                response.Metrics.Add(_mapper.Map<CpuMetricDto>(metric));
             }
             return Ok(response);
         }
@@ -84,14 +77,9 @@ namespace MetricsAgent.Controllers
             CpuMetric metric = _repository.GetById(id);
             AllCpuMetricsResponse response = new()
             {
-                Metrics = new List<CpuMetricDto>(id)
+                Metrics = new List<CpuMetricDto>(1)
                 {
-                    new CpuMetricDto
-                    {
-                        Time = metric.Time,
-                        Value = metric.Value,
-                        Id = metric.Id
-                    }
+                    _mapper.Map<CpuMetricDto>(metric)
                 }
             };
             return Ok(response);

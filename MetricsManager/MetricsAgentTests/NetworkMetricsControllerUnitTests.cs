@@ -1,4 +1,5 @@
-﻿using MetricsAgent.Controllers;
+﻿using MetricsAgent;
+using MetricsAgent.Controllers;
 using MetricsAgent.DAL;
 using MetricsAgent.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 using Moq;
+using AutoMapper;
 
 namespace MetricsAgentTests
 {
@@ -20,7 +22,9 @@ namespace MetricsAgentTests
         {
             mockRepository = new();
             mockLogger = new();
-            controller = new NetworkMetricsController(mockRepository.Object, mockLogger.Object);
+            MapperConfiguration mapperConfiguration = new(mp => mp.AddProfile(new MapperProfile()));
+            IMapper mapper = mapperConfiguration.CreateMapper();
+            controller = new NetworkMetricsController(mockRepository.Object, mockLogger.Object, mapper);
         }
 
         [Fact]

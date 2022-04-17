@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using AutoMapper;
 
 namespace MetricsAgent.Controllers
 {
@@ -15,12 +16,14 @@ namespace MetricsAgent.Controllers
     {
         private readonly ILogger<NetworkMetricsController> _logger;
         private readonly INetworkMetricsRepository _repository;
+        private readonly IMapper _mapper;
 
-        public NetworkMetricsController(INetworkMetricsRepository repository, ILogger<NetworkMetricsController> logger)
+        public NetworkMetricsController(INetworkMetricsRepository repository, ILogger<NetworkMetricsController> logger, IMapper mapper)
         {
             _repository = repository;
             _logger = logger;
             _logger.LogDebug(1, $"NLog встроен в {GetType().Name}");
+            _mapper = mapper;
         }
 
         [HttpGet("from/{fromTime}/to/{toTime}")]
@@ -32,14 +35,9 @@ namespace MetricsAgent.Controllers
             {
                 Metrics = new List<NetworkMetricDto>()
             };
-            foreach (var metric in metrics)
+            foreach (NetworkMetric metric in metrics)
             {
-                response.Metrics.Add(new NetworkMetricDto
-                {
-                    Time = metric.Time,
-                    Value = metric.Value,
-                    Id = metric.Id
-                });
+                response.Metrics.Add(_mapper.Map<NetworkMetricDto>(metric));
             }
             return Ok(response);
         }
@@ -65,14 +63,9 @@ namespace MetricsAgent.Controllers
             {
                 Metrics = new List<NetworkMetricDto>()
             };
-            foreach (var metric in metrics)
+            foreach (NetworkMetric metric in metrics)
             {
-                response.Metrics.Add(new NetworkMetricDto
-                {
-                    Time = metric.Time,
-                    Value = metric.Value,
-                    Id = metric.Id
-                });
+                response.Metrics.Add(_mapper.Map<NetworkMetricDto>(metric));
             }
             return Ok(response);
         }
@@ -84,14 +77,9 @@ namespace MetricsAgent.Controllers
             NetworkMetric metric = _repository.GetById(id);
             AllNetworkMetricsResponse response = new()
             {
-                Metrics = new List<NetworkMetricDto>(id)
+                Metrics = new List<NetworkMetricDto>(1)
                 {
-                    new NetworkMetricDto
-                    {
-                        Time = metric.Time,
-                        Value = metric.Value,
-                        Id = metric.Id
-                    }
+                    _mapper.Map<NetworkMetricDto>(metric)
                 }
             };
             return Ok(response);

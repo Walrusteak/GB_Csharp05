@@ -1,3 +1,4 @@
+using MetricsAgent;
 using MetricsAgent.Controllers;
 using MetricsAgent.DAL;
 using MetricsAgent.Models;
@@ -7,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 using Moq;
+using AutoMapper;
 
 namespace MetricsAgentTests
 {
@@ -20,7 +22,9 @@ namespace MetricsAgentTests
         {
             mockRepository = new();
             mockLogger = new();
-            controller = new CpuMetricsController(mockRepository.Object, mockLogger.Object);
+            MapperConfiguration mapperConfiguration = new(mp => mp.AddProfile(new MapperProfile()));
+            IMapper mapper = mapperConfiguration.CreateMapper();
+            controller = new CpuMetricsController(mockRepository.Object, mockLogger.Object, mapper);
         }
 
         [Fact]
