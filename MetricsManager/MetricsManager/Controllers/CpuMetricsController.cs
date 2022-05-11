@@ -25,6 +25,19 @@ namespace MetricsManager.Controllers
             _mapper = mapper;
         }
 
+        /// <summary>
+        /// Получает метрики CPU заданного агента за весь диапазон времени
+        /// </summary>
+        /// <remarks>
+        /// Пример запроса:
+        ///
+        /// GET api/metrics/cpu/agent/1
+        ///
+        /// </remarks>
+        /// <param name="agentId">Номер агента</param>
+        /// <returns>Список метрик ЦП заданного агента за все время</returns>
+        /// <response code="201">Если всё хорошо</response>
+        /// <response code="400">Если передали неправильные параметры</response>
         [HttpGet("agent/{agentId}")]
         public IActionResult GetAllMetricsFromAgent([FromRoute] int agentId)
         {

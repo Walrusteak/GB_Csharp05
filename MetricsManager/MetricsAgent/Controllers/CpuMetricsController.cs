@@ -26,6 +26,20 @@ namespace MetricsAgent.Controllers
             _mapper = mapper;
         }
 
+        /// <summary>
+        /// Получает метрики CPU на заданном диапазоне времени
+        /// </summary>
+        /// <remarks>
+        /// Пример запроса:
+        ///
+        /// GET api/metrics/cpu/from/1/to/9999999999
+        ///
+        /// </remarks>
+        /// <param name="fromTime">начальная метрика времени в секундах с 01.01.1970</param>
+        /// <param name="toTime">конечная метрика времени в секундах с 01.01.1970</param>
+        /// <returns>Список метрик, сохранённых в заданном диапазоне времени</returns>
+        /// <response code="201">Если всё хорошо</response>
+        /// <response code="400">Если передали неправильные параметры</response>
         [HttpGet("from/{fromTime}/to/{toTime}")]
         public IActionResult GetMetrics([FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
         {

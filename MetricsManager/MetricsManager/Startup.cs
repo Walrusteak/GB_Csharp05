@@ -9,12 +9,15 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 using Polly;
 using Quartz;
 using Quartz.Impl;
 using Quartz.Spi;
 using System;
 using System.Data.SQLite;
+using System.IO;
+using System.Reflection;
 
 namespace MetricsManager
 {
@@ -70,6 +73,31 @@ namespace MetricsManager
             services.AddSingleton(new JobSchedule(typeof(NetworkMetricsJob), "0/5 * * * * ?"));
             services.AddSingleton(new JobSchedule(typeof(RamMetricsJob), "0/5 * * * * ?"));
             services.AddHostedService<QuartzHostedService>();
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Version = "v1",
+                    Title = "API сервиса агента сбора метрик",
+                    Description = "Здесь можно поиграть с api нашего сервиса",
+                    TermsOfService = new Uri("https://example.com/terms"),
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Yagello V",
+                        Email = string.Empty,
+                        Url = new Uri("https://github.com/Walrusteak"),
+                    },
+                    License = new OpenApiLicense
+                    {
+                        Name = "Можно указать, под какой лицензией всё опубликовано",
+                        Url = new Uri("https://example.com/license"),
+                    }
+                });
+                string xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
+            });
         }
 
         private void ConfigureSqlLiteConnection(IServiceCollection services)
@@ -94,6 +122,13 @@ namespace MetricsManager
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+            });
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "API сервиса менеджера сбора метрик");
+                c.RoutePrefix = string.Empty;
             });
 
             migrationRunner.MigrateUp();
